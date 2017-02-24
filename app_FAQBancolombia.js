@@ -11,10 +11,9 @@ const
 cons_km = "2";
 
 /* Se declara la variable para extraer la carga Util */
-// fb04200f-257c-4863-8de5-00f94f30340d --id Banco FAQ
-
+// a27a80dc-6155-44e4-bacc-bd36798a25a5 --id Banco FAQ
 var payload = {
-	workspace_id : '6170d843-b2fc-440d-b46a-9cbe9d4190f5',
+	workspace_id : 'a27a80dc-6155-44e4-bacc-bd36798a25a5',
 
 	context : {
 		timezone : "America/Bogota"
@@ -34,7 +33,7 @@ var client = new Client();
 function LocationsQuery(sender, args) {
 
 	client.post(urlApi, args, function(data, response) {
-		sendtext = "el cajero mas cercano es: "
+		sendtext = "El cajero mas cerca de ti para realizar Avances es : "
 				+ JSON.stringify(data.channels[0].address);
 		sendTextMessage(sender, sendtext);
 	});
@@ -76,8 +75,8 @@ var watsonDialogCredentials = extend({
 var conversation = watson.conversation(watsonDialogCredentials);
 /* Variables de entorno Locales */
 var token = process.env.TOKEN
-		|| "EAAYY2wPd5bMBAGq82QPg1lmIV7DYmtDNtZBRhZBAnPLmZB00SemOdCpQMTeUWz7eyaPU1R5DRkUoVYQ4E8q51FHE2C9pP9epl8NjEFvqVrt3Xan1eARQgCYo9SmQHs3JlHcTLRX1y3VKEg6mMPQXivp7B7T2TIyaPX50Ji3eAZDZD";
-var secret = process.env.SECRET || 'd7d21f9498392bf6836538ad5963cecb';
+		|| "EAAEqZCDJOtDgBAM0ZBXzwZCGBZAT6YMzz8GzfZBvZBJf1sAPqA9yh5FBQvsq6pklFbFAfWzflOLacT8rkL1kScdpl4GD79oHrKkXaS6ZCAoT3ZCR4sfC0onaHecYa8nUMDNURaOVD1MBOejG1ciES03xJuhmXv71epERepPyXiTMcQZDZD";
+var secret = process.env.SECRET || 'c5593bd84a78df6f881a06d4b961c9d0';
 /* Inicializa servidor Node.js */
 var appEnv = cfenv.getAppEnv();
 var app = express();
@@ -194,10 +193,10 @@ function sendGenericTemplateMessageWithTweets(recipient, author, imageUrl,
 }
 
 function formatTextMessage(recipient, Objdata) {
-	//Se carga el conexto de la conversacion
+	// Se carga el conexto de la conversacion
 	payload.context = Objdata.context;
 	payload.action = Objdata.output.action;
-	//Se realiza la operacion con la cadena de caracteres para remover ["
+	// Se realiza la operacion con la cadena de caracteres para remover ["
 	sendtext = JSON.stringify(Objdata.output.text);
 	ad = JSON.parse(sendtext);
 	sd = new Array(1);
@@ -205,25 +204,22 @@ function formatTextMessage(recipient, Objdata) {
 	var a = sd[0];
 	var cas;
 	aa = "" + a + "";
-	console.log("intents[0].confidence>",Objdata.intents[0].confidence);
-	console.log("payload Value-->",payload);
-	console.log("sendText Value--->",sendtext);
-	console.log("aa value--->",aa);
-	console.log("link-->",Objdata.output.link);
-	
-	if (payload.action ==="action_saludo" ||  Objdata.output.link==="no_link" ) {
-	console.log("Entre a sendTextMessage")	;
+	console.log("intent >", Objdata.intents[0]);
+	console.log("intents[0].confidence>", Objdata.intents[0].confidence);
+
+	if (payload.action === "action_saludo" || Objdata.output.link === "no_link") {
 		sendTextMessage(recipient, aa);
 	} else {
-		console.log("Entre a sendButtonMessage")	;
-		//Se crea arreglo para enviar el attributo URL Button
+
+		// Se crea arreglo para enviar el attributo URL Button
 		button = [ {
 			"type" : "web_url",
 			"url" : Objdata.output.link,
 			"title" : Objdata.output.title_link
 		} ];
 		sendButtonMessage(recipient, aa, button);
-	};
+	}
+	;
 
 }
 
@@ -236,7 +232,6 @@ function callConversation(args, sender) {
 			console.error(JSON.stringify(err));
 			return res.status(err.code || 500).json(err);
 		}
-		console.log("Data: ", data);
 		formatTextMessage(sender, data);
 	});
 
@@ -248,23 +243,25 @@ function processEvent(event) {
 	var text;
 	if (event.message && event.message.attachments
 			&& event.message.attachments.length > 0) {
-		lat = event.message.attachments[0].payload.coordinates.lat;
-		lng = event.message.attachments[0].payload.coordinates.long;
-		args = {
-			data : {
-				latitude : lat,
+		if (event.message.attachments[0].type === 'location') {
+			lat = event.message.attachments[0].payload.coordinates.lat;
+			lng = event.message.attachments[0].payload.coordinates.long;
+			args = {
+				data : {
+					latitude : lat,
 
-				longitude : lng,
+					longitude : lng,
 
-				idType : cons_ubicacion,
+					idType : cons_ubicacion,
 
-				radioInKms : cons_km
-			},
-			headers : {
-				"Content-Type" : "application/json"
-			}
-		};
-		LocationsQuery(sender, args);
+					radioInKms : cons_km
+				},
+				headers : {
+					"Content-Type" : "application/json"
+				}
+			};
+			LocationsQuery(sender, args);
+		}
 	} else if (event.message && event.message.text) {
 		text = event.message.text;
 		payload.input = {
@@ -277,7 +274,6 @@ function processEvent(event) {
 
 /* Script pra recibir los mensajes desde facebook en /webhook/ */
 app.post('/webhook/', function(req, res) {
-	console.log("entre a post del webhook");
 	messaging_events = req.body.entry[0].messaging;
 	for (i = 0; i < messaging_events.length; i++) {
 		event = req.body.entry[0].messaging[i];
